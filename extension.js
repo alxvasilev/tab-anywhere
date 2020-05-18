@@ -129,24 +129,28 @@ exports.activate = function() {
         }
 
         let diff = (currIndent - target); // diff is always in spaces
-        if (diff === 0) {
-            return; // no change
-        }
-
-        // business as usual
-        if (diff > 0) {
+        if (diff == 0) {
+            // business as usual
+            editor.edit(function(builder) {
+                builder.insert(editor.selection.active, (
+                    // diff == 0 : Normal indent
+                    insertSpaces? ' '.repeat(-diff) : '\t'.repeat(Math.floor((-diff) / tabSize))
+                ));
+            });
+        } else if (diff > 0) {
             // overindented - delete some spaces
             editor.edit(function(builder) {
-                builder.delete(new vscode.Range(cursorLine, 0, cursorLine,
-                    insertSpaces ? diff : Math.floor(diff / tabSize)));
+                builder.insert(new vscode.Position(cursorLine, currIndent), (
+                    // diff < 0 : under-indented, add some spaces
+                    insertSpaces? ' '.repeat(-diff + (diff == 0? 1 : 0)) : '\t'.repeat(Math.floor((-diff) / tabSize) + (diff == 0? 1 : 0))
+                ));
             });
-        }
-        else {
-            // diff < 0 : under-indented, add some spaces
+        } else {
             editor.edit(function(builder) {
-                builder.insert(new vscode.Position(cursorLine, 0), insertSpaces
-                ? ' '.repeat(-diff)
-                : '\t'.repeat(Math.floor((-diff) / tabSize)));
+                builder.insert(new vscode.Position(cursorLine, 0), (
+                    // diff < 0 : under-indented, add some spaces
+                    insertSpaces? ' '.repeat(-diff) : '\t'.repeat(Math.floor((-diff) / tabSize))
+                ));
             });
         }
     } catch(e) {
@@ -154,4 +158,3 @@ exports.activate = function() {
     }
     });
 }
-
